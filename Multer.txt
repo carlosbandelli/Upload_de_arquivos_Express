@@ -1,0 +1,83 @@
+quando voce quer enviar dados para o seu back-end atravez de um formulario voce precisa definir
+o tipo de encriptação desse formulário 
+
+
+<form method="post" enctype="multipart/form-data" action="/upload"> <--- tipo de encriptação
+    <input type="file" name="file">
+    <input type="submit" value="upload">
+</form>
+
+Sobre o multer:
+
+O multer é um middleware de upload
+
+configurar o multer:
+
+Criar um objeto que vai receber o multer e o diretório que vai salvar os arquivos
+Obs:Nesse caso não colocar barra no inicio e sim no final, por que sinão ele vai criar uma pasta no node_modules e salvar-lá.
+conforme exemplo:
+
+const upload = multer({dest: "uploads/"})
+
+Agora vou fazer uma rota que vai receber o arquivo, vai ser uma rota do tipo post que vou chamar
+de /upload
+
+Como que é que nos fazemos para utilizar o multer nesta rota que acabemos de criar 
+para pegar os arquivos enviados, nós podemos simplesmte colocar uma , antes do (req, res)
+e usar a variavel que acabamos de criar e acrescetamos uma função da biblioteca
+e o nome do campo que esta recebendo o arquivo, que nesse caso é o que esta no HTML
+
+---------Rota criada-------------------------------------
+
+app.post("/upload",upload.single("file"),(req, res) => {
+    res.send("Arquivo recebido!")
+})
+
+---------------------------------------------------------
+
+
+---------------------------------------------------------
+<form method="post" enctype="multipart/form-data" action="/upload"> 
+    <input type="file" name="file"> <----- esse campo
+    <input type="submit" value="upload">
+</form>
+---------------------------------------------------------
+
+Apartir do momento que eu faço isso, toda vez que eu mandar uma requisição,
+para essa rota com arquivo nesse campo file, automaticamente ele vai fazer upload
+desse arquivo para dentro da pasta
+
+Resolvendo o problema da extensão e do nome
+
+Criando uma função para colocar no nosso middleware
+
+essa função eu vou charm elea de storage porque o multe tem um funcionalidade chamada .diskStorage() que permite nos manipularmos os arquivos 
+depois que o upload dele foi feito
+
+e dentro desa função a primeira coisa que temos que configurar é a destination
+que para qual lugar esse arquivos vão ser salvos.
+e dentro da destination no passamos uma função eu recebe um req, file e um cb()callback
+e dentro do call back voce coloca null e o diretório que voce quer salvar no caso é "upload/"
+depois disso definimos o nome do arquivo, chamando filename, nisso nos vamos te um a função que vai definir o nome de cada arquivo
+chama uma function(req,file,cb) e nessa função nos vamospegar esse callback com padrão null e depois definimos o nome do arquivo que queremos
+eu quero gerar um arquivo com o nome original dele com a extensão 
+para usar o nome original do arquivo usamos a função .originalname e concatenamos com Date.now() esse Date ser para gerar a data em milisegundos, assim evita de ter dois arivos com o mesmo nome
+para pegar a extensão do arquivo temos que importar um modulo nativo do node chamado path
+e nisso voce concatena assim:
+
+path.extname(file.originalname)
+
+Código original :
+----Importação do modulo nativo do path-----
+const path = require("path")
+------------------------------------------
+const storage = multer.diskStorage({
+    destination: function(req,file,cb){
+        cb(null,"uploads/")
+    },
+    filename: function(req,file,cb){
+        cb(null,file.originalname + Date.now() + path.extname(file.originalname)) <---contatenação
+    }
+})
+------------------------------------------------
+
